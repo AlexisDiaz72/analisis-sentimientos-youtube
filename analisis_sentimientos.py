@@ -1,16 +1,3 @@
-"""
-analisis_sentimientos.py
-========================
-Lee el Excel ya descargado (mineria_buap_final.xlsx) y recalcula
-los sentimientos usando un léxico en español ampliado, reemplazando
-el TextBlob que clasificaba casi todo como Neutro.
-
-USO:
-    python analisis_sentimientos.py
-    python analisis_sentimientos.py --input mi_archivo.xlsx --output resultado.xlsx
-
-NO requiere la API de YouTube ni credenciales de ningún tipo.
-"""
 
 import argparse
 import re
@@ -20,16 +7,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
-# ── Léxico de sentimientos en español ────────────────────────────────────────
-# Puntuaciones: positivo (+1 a +3), negativo (-1 a -3)
 LEXICO_ES = {
-    # --- Muy positivo (+3) ---
+    
     'excelente': 3, 'maravilloso': 3, 'increíble': 3, 'fantástico': 3,
     'genial': 3, 'perfecto': 3, 'extraordinario': 3, 'espectacular': 3,
     'feliz': 3, 'felicidad': 3, 'alegría': 3, 'hermoso': 3,
     'brillante': 3, 'outstanding': 3, 'grandioso': 3, 'magnífico': 3,
 
-    # --- Positivo (+2) ---
     'bueno': 2, 'bien': 2, 'bonito': 2, 'amor': 2, 'amar': 2,
     'esperanza': 2, 'mejoró': 2, 'mejorar': 2, 'mejora': 2,
     'salvó': 2, 'salvo': 2, 'salvaste': 2, 'ayudó': 2, 'ayuda': 2,
@@ -38,19 +22,16 @@ LEXICO_ES = {
     'tranquilo': 2, 'tranquilidad': 2, 'calma': 2, 'paz': 2,
     'satisfecho': 2, 'satisfacción': 2, 'contento': 2, 'alegre': 2,
 
-    # --- Levemente positivo (+1) ---
     'gracias': 1, 'interesante': 1, 'importante': 1, 'aprendo': 1,
     'aprender': 1, 'entender': 1, 'entendí': 1, 'claro': 1, 'correcto': 1,
     'recomiendo': 1, 'recomendable': 1, 'comparto': 1, 'suscribir': 1,
     'valioso': 1, 'verdad': 1, 'efectivo': 1, 'funciona': 1, 'funcional': 1,
 
-    # --- Muy negativo (-3) ---
     'horrible': -3, 'terrible': -3, 'devastador': -3, 'insoportable': -3,
     'muero': -3, 'morir': -3, 'muerte': -3, 'matar': -3, 'suicidio': -3,
     'suicidar': -3, 'odio': -3, 'odiar': -3, 'desesperado': -3,
     'desesperanza': -3, 'agonía': -3, 'tortura': -3,
 
-    # --- Negativo (-2) ---
     'triste': -2, 'tristeza': -2, 'llorar': -2, 'lloro': -2, 'llorando': -2,
     'dolor': -2, 'doloroso': -2, 'sufro': -2, 'sufrir': -2, 'sufrimiento': -2,
     'miedo': -2, 'terror': -2, 'angustia': -2, 'angustiado': -2,
@@ -59,7 +40,6 @@ LEXICO_ES = {
     'inútil': -2, 'culpa': -2, 'culpable': -2, 'vergüenza': -2,
     'rechazado': -2, 'rechazo': -2, 'crisis': -2, 'colapso': -2,
 
-    # --- Levemente negativo (-1) ---
     'depresión': -1, 'deprimido': -1, 'ansiedad': -1, 'ansioso': -1,
     'nervioso': -1, 'preocupado': -1, 'preocupación': -1, 'cansado': -1,
     'cansancio': -1, 'agotado': -1, 'agotamiento': -1, 'mal': -1,
@@ -69,14 +49,12 @@ LEXICO_ES = {
     'molesto': -1, 'molestar': -1, 'falla': -1, 'fallar': -1,
 }
 
-# Intensificadores que multiplican el score
 INTENSIFICADORES = {
     'muy': 1.5, 'mucho': 1.3, 'demasiado': 1.4, 'bastante': 1.2,
     'super': 1.5, 'súper': 1.5, 'extremadamente': 1.6, 'totalmente': 1.3,
     'completamente': 1.3, 'absolutamente': 1.3, 'tan': 1.2,
 }
 
-# Negadores que invierten el score
 NEGADORES = {'no', 'nunca', 'jamás', 'ni', 'sin', 'tampoco'}
 
 
@@ -105,28 +83,23 @@ def calcular_score_lexico(texto):
     negador_activo = False
 
     for i, token in enumerate(tokens):
-        # Detectar negador
         if token in NEGADORES:
             negador_activo = True
             continue
 
-        # Detectar intensificador
         if token in INTENSIFICADORES:
             intensificador_activo = INTENSIFICADORES[token]
             continue
 
-        # Calcular score del token
         if token in LEXICO_ES:
             score = LEXICO_ES[token] * intensificador_activo
             if negador_activo:
                 score = -score
             score_total += score
 
-        # Resetear modificadores después de cada palabra de contenido
         intensificador_activo = 1.0
         negador_activo = False
 
-    # Normalizar entre -1.0 y 1.0
     max_posible = len(tokens) * 3.0 * 1.6
     if max_posible == 0:
         return 0.0
@@ -214,7 +187,6 @@ def recalcular_resumen(df_comentarios, df_resumen_original):
         nueva_fila['negative_comments_pct'] = neg / n * 100
         nueva_fila['satisfaction_index'] = (pos - neg) / n
 
-        # Palabras clave recalculadas
         col_texto = 'comment_text_clean' if 'comment_text_clean' in comentarios_video.columns else 'comment_text'
         kw_df = extraer_palabras_clave(comentarios_video[col_texto], top_n=8)
         nueva_fila['top_keywords'] = ', '.join(kw_df['keyword'].tolist())
@@ -230,7 +202,6 @@ def generar_pdf(df_resumen, df_comentarios, pdf_path):
     colores = {'Positivo': '#4CAF50', 'Neutro': '#9E9E9E', 'Negativo': '#F44336'}
 
     with PdfPages(pdf_path) as pdf:
-        # Portada
         fig, ax = plt.subplots(figsize=(11, 8.5))
         ax.axis('off')
         fig.patch.set_facecolor('#1565C0')
@@ -248,7 +219,6 @@ def generar_pdf(df_resumen, df_comentarios, pdf_path):
         pdf.savefig(fig, bbox_inches='tight')
         plt.close(fig)
 
-        # Una página por video
         for _, s in df_resumen.iterrows():
             vid = s['video_id']
             coms = df_comentarios[df_comentarios['video_id'] == vid] if not df_comentarios.empty else pd.DataFrame()
@@ -266,7 +236,6 @@ def generar_pdf(df_resumen, df_comentarios, pdf_path):
             header_ax.text(0.5, 0.20, f"Canal: {canal}  |  ID: {vid}",
                         ha='center', fontsize=9, color='#0D47A1', transform=header_ax.transAxes)
 
-            # Tabla métricas
             table_ax = fig.add_axes([0.03, 0.36, 0.48, 0.50])
             table_ax.axis('off')
             metricas = {
@@ -297,7 +266,6 @@ def generar_pdf(df_resumen, df_comentarios, pdf_path):
                     cell.set_facecolor('#FFFFFF')
                 cell.set_edgecolor('#BDBDBD')
 
-            # Gráfica sentimientos
             bar_ax = fig.add_axes([0.55, 0.42, 0.41, 0.42])
             orden = ['Positivo', 'Neutro', 'Negativo']
             pcts = [s.get('positive_comments_pct', 0),
@@ -317,7 +285,6 @@ def generar_pdf(df_resumen, df_comentarios, pdf_path):
             bar_ax.spines[['top', 'right']].set_visible(False)
             bar_ax.set_facecolor('#F5F5F5')
 
-            # Palabras clave
             kw_ax = fig.add_axes([0.03, 0.06, 0.93, 0.25])
             kw_ax.axis('off')
             kw_ax.text(0, 0.92, 'Palabras clave detectadas:', fontsize=10,
@@ -328,7 +295,6 @@ def generar_pdf(df_resumen, df_comentarios, pdf_path):
             pdf.savefig(fig, bbox_inches='tight')
             plt.close(fig)
 
-        # Página comparativa
         if len(df_resumen) > 1:
             fig, axes = plt.subplots(1, 2, figsize=(11, 8.5))
             fig.patch.set_facecolor('#FAFAFA')
@@ -415,18 +381,15 @@ def main():
     print(f"\nDistribución ORIGINAL (TextBlob):")
     print(df_comentarios['sentiment'].value_counts())
 
-    # Recalcular con léxico en español
     df_comentarios = recalcular_sentimientos(df_comentarios)
     df_resumen_nuevo = recalcular_resumen(df_comentarios, df_resumen_orig)
 
-    # Guardar resultados
     guardar_excel(df_comentarios, df_resumen_nuevo, args.output)
     generar_pdf(df_resumen_nuevo, df_comentarios, args.pdf)
 
     print("\n✓ Proceso completado.")
     print(f"  Excel:  {args.output}")
     print(f"  PDF:    {args.pdf}")
-
 
 if __name__ == '__main__':
     main()
