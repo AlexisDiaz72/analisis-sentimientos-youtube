@@ -1,4 +1,3 @@
-# Credenciales de Google / YouTube (nunca se suben)
 client-secret.json
 client_secret.json
 Client_Secret.json
@@ -6,20 +5,16 @@ Client_Secret.json
 token files/
 token_files/
 
-# Datos crudos con comentarios y nombres de usuarios
 *.csv
 *.xlsx
 *.db
 *.sqlite
 
-# Modelos generados
 *.pkl
 
-# Entorno de Python
 .venv/
 venv/
 __pycache__/
 *.pyc
 
-# Sistema
 .DS_Store
